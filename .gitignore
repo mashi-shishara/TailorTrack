@@ -1,0 +1,12 @@
+# Local database settings
+config.php
+.env
+
+# Customer uploads and backups
+storage/*
+!storage/.htaccess
+!storage/.gitkeep
+backups/
+
+# Error logs
+*.log
