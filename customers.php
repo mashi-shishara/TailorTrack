@@ -1,17 +1,98 @@
+<?php
+session_start();
+
+require_once __DIR__ . '/config.php';
+
+function escape($value)
+{
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+}
+
+function input($key)
+{
+    $value = $_POST[$key] ?? '';
+    return is_string($value) ? trim($value) : '';
+}
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$name = '';
+$phone = '';
+$notes = '';
+$errors = [];
+
+$success = $_SESSION['customer_success'] ?? '';
+unset($_SESSION['customer_success']);
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = input('name');
+    $phone = input('phone');
+    $notes = input('notes');
+    $token = input('csrf_token');
+
+    if (!hash_equals($_SESSION['csrf_token'], $token)) {
+        $errors[] = 'Please refresh the page and try again.';
+    }
+
+    if ($name === '' || mb_strlen($name) > 100) {
+        $errors[] = 'Enter a name with 1 to 100 characters.';
+    }
+
+    // Allow phone numbers with spaces, brackets, hyphens and +.
+    $phoneDigits = preg_replace('/[^0-9]/', '', $phone);
+
+    if (
+        mb_strlen($phone) > 30 ||
+        !preg_match('/^\+?[0-9 ()-]+$/', $phone) ||
+        strlen($phoneDigits) < 7 ||
+        strlen($phoneDigits) > 15
+    ) {
+        $errors[] = 'Enter a valid phone number with 7 to 15 digits.';
+    }
+
+    if (mb_strlen($notes) > 5000) {
+        $errors[] = 'Notes must be 5000 characters or fewer.';
+    }
+
+    if (empty($errors)) {
+        try {
+            $statement = $pdo->prepare(
+                'INSERT INTO customers (name, phone, notes)
+                 VALUES (:name, :phone, :notes)'
+            );
+
+            $statement->execute([
+                'name' => $name,
+                'phone' => $phone,
+                'notes' => $notes
+            ]);
+
+            $_SESSION['customer_success'] =
+                'Customer saved successfully!';
+
+            // Redirect so refreshing does not repeat the save.
+            session_write_close();
+              header('Location: customers.php', true, 303);
+               exit;
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            $errors[] = 'Unable to save the customer. Please try again.';
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>TailorTrack | Customers</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="app-layout">
-
         <aside class="sidebar">
             <div class="brand">
                 <h2>TailorTrack</h2>
@@ -20,7 +101,6 @@
 
             <nav class="navigation" aria-label="Main navigation">
                 <a href="index.php">Overview</a>
-
                 <button type="button" disabled>Orders</button>
 
                 <a href="customers.php" class="active"
@@ -51,22 +131,47 @@
                 <h2>Add a customer</h2>
 
                 <p id="form-notice" class="description">
-                    Form preview only. Saving will be enabled
-                    after the database is connected.
+                    Enter customer details below.
+                    Fields marked * are required.
                 </p>
 
-                <form aria-describedby="form-notice">
+                <?php if ($success !== ''): ?>
+    <div role="status"
+         style="background: #E7EDDC;
+                color: #245E50;
+                border: 1px solid #245E50;
+                padding: 16px;
+                margin: 16px 0;
+                border-radius: 8px;">
+        <strong><?= escape($success) ?></strong>
+    </div>
+<?php endif; ?>
+
+                <?php if (!empty($errors)): ?>
+                    <div role="alert">
+                        <p><strong>Please check the following:</strong></p>
+                        <ul>
+                            <?php foreach ($errors as $error): ?>
+                                <li><?= escape($error) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <form method="post" action="customers.php"
+                      aria-describedby="form-notice">
+
+                    <input type="hidden" name="csrf_token"
+                           value="<?= escape($_SESSION['csrf_token']) ?>">
+
                     <div class="form-grid">
-
                         <div class="form-field">
-                            <label for="customer-name">
-                                Full name *
-                            </label>
-
+                            <label for="customer-name">Full name *</label>
                             <input
                                 type="text"
                                 id="customer-name"
                                 name="name"
+                                value="<?= escape($name) ?>"
                                 placeholder="Enter customer name"
                                 maxlength="100"
                                 required
@@ -74,14 +179,12 @@
                         </div>
 
                         <div class="form-field">
-                            <label for="customer-phone">
-                                Phone number *
-                            </label>
-
+                            <label for="customer-phone">Phone number *</label>
                             <input
                                 type="tel"
                                 id="customer-phone"
                                 name="phone"
+                                value="<?= escape($phone) ?>"
                                 placeholder="Example: 0771234567"
                                 maxlength="30"
                                 required
@@ -89,36 +192,29 @@
                         </div>
 
                         <div class="form-field full-width">
-                            <label for="customer-notes">
-                                Notes (optional)
-                            </label>
-
+                            <label for="customer-notes">Notes (optional)</label>
                             <textarea
                                 id="customer-notes"
                                 name="notes"
                                 rows="4"
                                 maxlength="5000"
                                 placeholder="Preferences or special instructions"
-                            ></textarea>
+                            ><?= escape($notes) ?></textarea>
                         </div>
-
                     </div>
 
                     <div class="form-actions">
-                        <button type="reset" class="button-secondary">
+                        <a href="customers.php" class="button-secondary">
                             Clear form
-                        </button>
+                        </a>
 
-                        <button type="button"
-                                class="button-primary" disabled>
+                        <button type="submit" class="button-primary">
                             Save customer
                         </button>
                     </div>
                 </form>
             </section>
         </main>
-
     </div>
-
 </body>
 </html>
