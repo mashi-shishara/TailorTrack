@@ -82,6 +82,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$customers = [];
+$listError = '';
+
+try {
+    $statement = $pdo->query(
+        'SELECT id, name, phone, notes
+         FROM customers
+         ORDER BY id DESC'
+    );
+
+    $customers = $statement->fetchAll();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $listError = 'Unable to load customers. Please refresh the page.';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -214,6 +229,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </form>
             </section>
+            <section class="form-panel" aria-labelledby="customer-list-title">
+    <h2 id="customer-list-title">Customer list</h2>
+
+    <?php if ($listError !== ''): ?>
+        <p role="alert"><?= escape($listError) ?></p>
+
+    <?php elseif (empty($customers)): ?>
+        <p class="description">
+            No customers yet. Add your first customer above.
+        </p>
+
+    <?php else: ?>
+        <p class="description">
+            Total customers: <?= count($customers) ?>
+        </p>
+
+        <div class="table-scroll"
+             role="region"
+             aria-label="Customer list"
+             tabindex="0">
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Notes</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($customers as $customer): ?>
+                        <tr>
+                            <td><?= (int) $customer['id'] ?></td>
+                            <td><?= escape($customer['name']) ?></td>
+                            <td><?= escape($customer['phone']) ?></td>
+                            <td class="customer-notes"><?= escape($customer['notes'] !== ''  ? $customer['notes'] : '—' ) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
         </main>
     </div>
 </body>
