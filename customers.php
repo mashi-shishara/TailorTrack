@@ -85,12 +85,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $customers = [];
 $listError = '';
 
+$search = $_GET['search'] ?? '';
+$search = is_string($search)
+    ? mb_substr(trim($search), 0, 100)
+    : '';
+
 try {
-    $statement = $pdo->query(
-        'SELECT id, name, phone, notes
-         FROM customers
-         ORDER BY id DESC'
-    );
+    if ($search !== '') {
+        // Treat %, _ and ! as ordinary search characters.
+        $pattern = '%' . strtr($search, [
+            '!' => '!!',
+            '%' => '!%',
+            '_' => '!_'
+        ]) . '%';
+
+        $statement = $pdo->prepare(
+            "SELECT id, name, phone, notes
+             FROM customers
+             WHERE name LIKE :name_search ESCAPE '!'
+                OR phone LIKE :phone_search ESCAPE '!'
+             ORDER BY id DESC"
+        );
+
+        $statement->execute([
+            'name_search' => $pattern,
+            'phone_search' => $pattern
+        ]);
+    } else {
+        $statement = $pdo->query(
+            'SELECT id, name, phone, notes
+             FROM customers
+             ORDER BY id DESC'
+        );
+    }
 
     $customers = $statement->fetchAll();
 } catch (PDOException $e) {
@@ -229,20 +256,47 @@ try {
                     </div>
                 </form>
             </section>
-            <section class="form-panel" aria-labelledby="customer-list-title">
+           <section id="customer-list" class="form-panel"
+         aria-labelledby="customer-list-title">
     <h2 id="customer-list-title">Customer list</h2>
+
+   <form method="get" action="customers.php#customer-list"
+      class="customer-search">
+    <div class="form-field">
+        <label for="customer-search">Search customers</label>
+        <input
+            type="search"
+            id="customer-search"
+            name="search"
+            value="<?= escape($search) ?>"
+            placeholder="Enter name or phone number"
+            maxlength="100"
+        >
+    </div>
+
+    <button type="submit" class="button-primary">
+        Search
+    </button>
+
+    <a href="customers.php#customer-list" class="button-secondary">
+    Show all
+</a>
+</form>
 
     <?php if ($listError !== ''): ?>
         <p role="alert"><?= escape($listError) ?></p>
 
     <?php elseif (empty($customers)): ?>
         <p class="description">
-            No customers yet. Add your first customer above.
+           <?= $search !== ''
+    ? 'No customers match your search.'
+    : 'No customers yet. Add your first customer above.' ?>
         </p>
 
     <?php else: ?>
         <p class="description">
-            Total customers: <?= count($customers) ?>
+           <?= $search !== '' ? 'Matching customers' : 'Total customers' ?>:
+<?= count($customers) ?>
         </p>
 
         <div class="table-scroll"

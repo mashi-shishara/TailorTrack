@@ -364,3 +364,19 @@ h1 {
     outline: 2px solid #245E50;
     outline-offset: 4px;
 }
+.customer-search {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.customer-search .form-field {
+    flex: 1 1 240px;
+}
+
+a.button-secondary {
+    display: inline-block;
+    text-decoration: none;
+}
