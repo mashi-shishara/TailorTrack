@@ -52,13 +52,37 @@
                 </p>
             </section>
 
-            <section class="dashboard-placeholder">
-                <h2>Your studio at a glance</h2>
-                <p>
-                    Order summaries and upcoming fittings will
-                    appear here once we build those features.
-                </p>
-            </section>
+           <section class="summary-section" aria-label="Order summary">
+
+    <article class="summary-card highlight">
+        <h2>Active orders</h2>
+        <p class="summary-value">—</p>
+        <p class="summary-note">Orders currently in progress</p>
+    </article>
+
+    <article class="summary-card">
+        <h2>Ready for collection</h2>
+        <p class="summary-value">—</p>
+        <p class="summary-note">Finished and ready to collect</p>
+    </article>
+
+    <article class="summary-card">
+        <h2>Overdue orders</h2>
+        <p class="summary-value">—</p>
+        <p class="summary-note">Orders past their delivery date</p>
+    </article>
+
+    <article class="summary-card">
+        <h2>Outstanding balance</h2>
+        <p class="summary-value">LKR —</p>
+        <p class="summary-note">Remaining payments to receive</p>
+    </article>
+
+</section>
+
+<p class="data-notice">
+    Order totals will appear after the database is connected.
+</p>
         </main>
 
     </div>
