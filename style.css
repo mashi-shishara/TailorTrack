@@ -1,0 +1,47 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 60px 24px;
+    font-family: Arial, sans-serif;
+    background-color: #F5F6F2;
+    color: #203B38;
+}
+
+.welcome-card {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 40px;
+    background-color: #FFFFFF;
+    border: 1px solid #DDE5DC;
+    border-radius: 16px;
+}
+
+.brand-label {
+    color: #245E50;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+h1 {
+    margin: 16px 0;
+    font-size: 36px;
+    color: #245E50;
+}
+
+.description {
+    color: #596B63;
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.status {
+    display: inline-block;
+    padding: 12px 18px;
+    background-color: #E7EDDC;
+    color: #245E50;
+    border-radius: 8px;
+}
