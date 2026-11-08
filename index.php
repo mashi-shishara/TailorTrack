@@ -24,7 +24,7 @@
                 </a>
 
                 <button type="button" disabled>Orders</button>
-                <button type="button" disabled>Customers</button>
+                <a href="customers.php">Customers</a>
                 <button type="button" disabled>Fittings</button>
                 <button type="button" disabled>Payments</button>
                 <button type="button" disabled>Studio settings</button>
