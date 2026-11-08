@@ -178,7 +178,7 @@ try {
                 </p>
 
                 <?php if ($success !== ''): ?>
-    <div role="status"
+    <div id="success-message" role="status"
          style="background: #E7EDDC;
                 color: #245E50;
                 border: 1px solid #245E50;
@@ -200,8 +200,8 @@ try {
                     </div>
                 <?php endif; ?>
 
-                <form method="post" action="customers.php"
-                      aria-describedby="form-notice">
+                <form id="customer-form" method="post" action="customers.php"
+      aria-describedby="form-notice">
 
                     <input type="hidden" name="csrf_token"
                            value="<?= escape($_SESSION['csrf_token']) ?>">
@@ -310,6 +310,7 @@ try {
                         <th scope="col">Name</th>
                         <th scope="col">Phone</th>
                         <th scope="col">Notes</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
 
@@ -320,6 +321,12 @@ try {
                             <td><?= escape($customer['name']) ?></td>
                             <td><?= escape($customer['phone']) ?></td>
                             <td class="customer-notes"><?= escape($customer['notes'] !== ''  ? $customer['notes'] : '—' ) ?></td>
+                            <td>
+    <a href="edit-customer.php?id=<?= (int) $customer['id'] ?>"
+       class="button-secondary">
+        Edit
+    </a>
+</td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -329,5 +336,15 @@ try {
 </section>
         </main>
     </div>
+    <script>
+    const customerForm = document.getElementById('customer-form');
+    const successMessage = document.getElementById('success-message');
+
+    if (customerForm && successMessage) {
+        customerForm.addEventListener('input', function () {
+            successMessage.hidden = true;
+        }, { once: true });
+    }
+</script>
 </body>
 </html>
