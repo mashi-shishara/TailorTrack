@@ -4,44 +4,154 @@
 
 body {
     margin: 0;
-    padding: 60px 24px;
     font-family: Arial, sans-serif;
     background-color: #F5F6F2;
     color: #203B38;
 }
 
-.welcome-card {
-    max-width: 700px;
-    margin: 40px auto;
-    padding: 40px;
-    background-color: #FFFFFF;
-    border: 1px solid #DDE5DC;
-    border-radius: 16px;
+.app-layout {
+    display: flex;
+    min-height: 100vh;
 }
 
-.brand-label {
+/* Left navigation area */
+.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    padding: 32px 24px;
+    background-color: #FFFFFF;
+    border-right: 1px solid #DDE5DC;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.brand h2 {
+    margin: 0;
     color: #245E50;
-    font-size: 14px;
+    font-size: 26px;
+}
+
+.brand p {
+    margin-top: 8px;
+    color: #596B63;
+    font-size: 13px;
+}
+
+.navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 36px;
+}
+
+.navigation a,
+.navigation button {
+    padding: 14px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #203B38;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+}
+
+.navigation a.active {
+    background-color: #E7EDDC;
+    color: #245E50;
     font-weight: bold;
-    letter-spacing: 2px;
+}
+
+.navigation a:hover {
+    background-color: #F0F4EB;
+}
+
+.navigation button:disabled {
+    color: #737D77;
+    cursor: not-allowed;
+}
+
+.sidebar-note {
+    margin-top: auto;
+    padding-top: 40px;
+    color: #596B63;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Main dashboard area */
+.main-content {
+    flex: 1;
+    min-width: 0;
+    padding: 40px;
+}
+
+.eyebrow {
+    color: #596B63;
+    font-size: 12px;
+    letter-spacing: 1px;
 }
 
 h1 {
-    margin: 16px 0;
-    font-size: 36px;
-    color: #245E50;
+    margin: 12px 0;
+    font-size: 32px;
 }
 
 .description {
     color: #596B63;
-    font-size: 18px;
     line-height: 1.6;
 }
 
-.status {
-    display: inline-block;
-    padding: 12px 18px;
+.welcome-panel {
+    margin-top: 32px;
+    padding: 28px;
     background-color: #E7EDDC;
-    color: #245E50;
-    border-radius: 8px;
+    border-radius: 14px;
+}
+
+.welcome-panel h2,
+.dashboard-placeholder h2 {
+    margin-top: 0;
+}
+
+.welcome-panel p,
+.dashboard-placeholder p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.dashboard-placeholder {
+    margin-top: 24px;
+    padding: 28px;
+    background-color: #FFFFFF;
+    border: 1px solid #DDE5DC;
+    border-radius: 14px;
+}
+
+/* Layout for smaller screens */
+@media (max-width: 700px) {
+    .app-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #DDE5DC;
+    }
+
+    .navigation {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .sidebar-note {
+        display: none;
+    }
+
+    .main-content {
+        padding: 24px;
+    }
 }
