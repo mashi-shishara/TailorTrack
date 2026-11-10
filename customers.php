@@ -143,7 +143,7 @@ try {
 
             <nav class="navigation" aria-label="Main navigation">
                 <a href="index.php">Overview</a>
-                <button type="button" disabled>Orders</button>
+               <a href="orders.php">Orders</a>
 
                 <a href="customers.php" class="active"
                    aria-current="page">

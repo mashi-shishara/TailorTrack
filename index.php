@@ -23,7 +23,7 @@
                     Overview
                 </a>
 
-                <button type="button" disabled>Orders</button>
+                <a href="orders.php">Orders</a>
                 <a href="customers.php">Customers</a>
                 <button type="button" disabled>Fittings</button>
                 <button type="button" disabled>Payments</button>
