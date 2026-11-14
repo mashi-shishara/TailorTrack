@@ -1,3 +1,43 @@
+<?php
+require_once __DIR__ . '/config.php';
+
+$summary = null;
+$dashboardError = '';
+
+try {
+    // Use the shop's local date for overdue orders.
+    $today = (new DateTimeImmutable(
+        'now',
+        new DateTimeZone('Asia/Colombo')
+    ))->format('Y-m-d');
+
+    $statement = $pdo->prepare(
+        "SELECT
+            COUNT(CASE
+                WHEN status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+                THEN 1
+            END) AS active_orders,
+
+            COUNT(CASE
+                WHEN status = 'Ready'
+                THEN 1
+            END) AS ready_orders,
+
+            COUNT(CASE
+                WHEN due_date < :today
+                AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+                THEN 1
+            END) AS overdue_orders
+         FROM orders"
+    );
+
+    $statement->execute(['today' => $today]);
+    $summary = $statement->fetch();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $dashboardError = 'Unable to load order totals. Please refresh the page.';
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,19 +96,25 @@
 
     <article class="summary-card highlight">
         <h2>Active orders</h2>
-        <p class="summary-value">—</p>
+       <p class="summary-value">
+    <?= $summary !== null ? (int) $summary['active_orders'] : '—' ?>
+</p>
         <p class="summary-note">Orders currently in progress</p>
     </article>
 
     <article class="summary-card">
         <h2>Ready for collection</h2>
-        <p class="summary-value">—</p>
+        <p class="summary-value">
+    <?= $summary !== null ? (int) $summary['ready_orders'] : '—' ?>
+</p>
         <p class="summary-note">Finished and ready to collect</p>
     </article>
 
     <article class="summary-card">
         <h2>Overdue orders</h2>
-        <p class="summary-value">—</p>
+        <p class="summary-value">
+    <?= $summary !== null ? (int) $summary['overdue_orders'] : '—' ?>
+</p>
         <p class="summary-note">Orders past their delivery date</p>
     </article>
 
@@ -80,9 +126,16 @@
 
 </section>
 
-<p class="data-notice">
-    Order totals will appear after the database is connected.
-</p>
+<?php if ($dashboardError !== ''): ?>
+    <p class="data-notice" role="alert">
+        <?= htmlspecialchars($dashboardError, ENT_QUOTES, 'UTF-8') ?>
+    </p>
+<?php else: ?>
+    <p class="data-notice">
+        Order counts are up to date.
+        Outstanding balance will be available after payment tracking is added.
+    </p>
+<?php endif; ?>
         </main>
 
     </div>
