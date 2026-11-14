@@ -30,6 +30,18 @@ if (empty($_SESSION['csrf_token'])) {
 
 $success = $_SESSION['order_success'] ?? '';
 unset($_SESSION['order_success']);
+$statusSuccess = $_SESSION['order_status_success'] ?? '';
+unset($_SESSION['order_status_success']);
+
+$orderStatuses = [
+    'Received',
+    'Cutting',
+    'Sewing',
+    'Fitting',
+    'Ready',
+    'Collected',
+    'Cancelled'
+];
 
 $customers = [];
 $loadError = '';
@@ -352,6 +364,11 @@ try {
 <section id="order-list" class="form-panel"
          aria-labelledby="order-list-title">
     <h2 id="order-list-title">Order list</h2>
+    <?php if ($statusSuccess !== ''): ?>
+    <p class="success-alert" role="status">
+        <?= escape($statusSuccess) ?>
+    </p>
+<?php endif; ?>
 
     <?php if ($orderListError !== ''): ?>
         <p role="alert"><?= escape($orderListError) ?></p>
@@ -393,15 +410,39 @@ try {
                             <td class="order-amount"><?= escape($order['total']) ?></td>
                             <td class="order-date"><?= escape($order['due_date']) ?></td>
                             <td>
-                                <span class="order-status">
-                                    <?= escape($order['status']) ?>
-                                </span>
-                            </td>
+    <form method="post" action="update-order-status.php"
+          class="status-form">
+
+        <input type="hidden" name="csrf_token"
+               value="<?= escape($_SESSION['csrf_token']) ?>">
+
+        <input type="hidden" name="order_id"
+               value="<?= (int) $order['id'] ?>">
+
+        <label for="status-<?= (int) $order['id'] ?>">
+            Order #<?= (int) $order['id'] ?> status
+        </label>
+
+        <select id="status-<?= (int) $order['id'] ?>" name="status">
+            <?php foreach ($orderStatuses as $status): ?>
+                <option value="<?= escape($status) ?>"
+                    <?= $order['status'] === $status ? 'selected' : '' ?>>
+                    <?= escape($status) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+
+        <button type="submit" class="button-primary">
+            Update
+        </button>
+    </form>
+</td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+
     <?php endif; ?>
 </section>
     </main>
