@@ -394,3 +394,41 @@ a.button-secondary {
     outline: 2px solid #245E50;
     outline-offset: 2px;
 }
+.success-alert {
+    background: #E7EDDC;
+    color: #245E50;
+    border: 1px solid #245E50;
+    border-left: 5px solid #245E50;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+.order-table {
+    min-width: 850px;
+}
+
+.order-amount,
+.order-date {
+    white-space: nowrap;
+}
+
+.order-status {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #E7EDDC;
+    color: #245E50;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}.order-table {
+    min-width: 850px;
+}
+
+.order-amount,
+.order-date {
+    white-space: nowrap;
+}
+

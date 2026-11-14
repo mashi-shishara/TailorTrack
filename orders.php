@@ -153,6 +153,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+$orders = [];
+$orderListError = '';
+
+try {
+    $statement = $pdo->query(
+        'SELECT
+            orders.id,
+            customers.name AS customer_name,
+            orders.garment,
+            orders.quantity,
+            orders.unit_price,
+            (orders.quantity * orders.unit_price) AS total,
+            orders.due_date,
+            orders.status
+         FROM orders
+         INNER JOIN customers
+            ON orders.customer_id = customers.id
+         ORDER BY orders.id DESC'
+    );
+
+    $orders = $statement->fetchAll();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $orderListError = 'Unable to load orders. Please refresh the page.';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -204,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </p>
 
     <?php if ($success !== ''): ?>
-        <p id="order-success" role="status">
+       <p id="order-success" class="success-alert" role="status">
             <strong><?= escape($success) ?></strong>
         </p>
     <?php endif; ?>
@@ -323,6 +348,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
         </div>
     </form>
+</section>
+<section id="order-list" class="form-panel"
+         aria-labelledby="order-list-title">
+    <h2 id="order-list-title">Order list</h2>
+
+    <?php if ($orderListError !== ''): ?>
+        <p role="alert"><?= escape($orderListError) ?></p>
+
+    <?php elseif (empty($orders)): ?>
+        <p class="description">
+            No orders yet. Add your first order above.
+        </p>
+
+    <?php else: ?>
+        <p class="description">
+            Total orders: <?= count($orders) ?>
+        </p>
+
+        <div class="table-scroll"
+             role="region"
+             aria-label="Order list"
+             tabindex="0">
+            <table class="customer-table order-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Order ID</th>
+                        <th scope="col">Customer</th>
+                        <th scope="col">Garment</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total (LKR)</th>
+                        <th scope="col">Delivery date</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($orders as $order): ?>
+                        <tr>
+                            <td>#<?= (int) $order['id'] ?></td>
+                            <td><?= escape($order['customer_name']) ?></td>
+                            <td><?= escape($order['garment']) ?></td>
+                            <td><?= (int) $order['quantity'] ?></td>
+                            <td class="order-amount"><?= escape($order['total']) ?></td>
+                            <td class="order-date"><?= escape($order['due_date']) ?></td>
+                            <td>
+                                <span class="order-status">
+                                    <?= escape($order['status']) ?>
+                                </span>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
 </section>
     </main>
 </div>
