@@ -43,3 +43,21 @@ CREATE TABLE customers (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE payments (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id INT UNSIGNED NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    method ENUM('Cash', 'Bank transfer') NOT NULL DEFAULT 'Cash',
+    note VARCHAR(250) NOT NULL DEFAULT '',
+    paid_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payments_order
+        FOREIGN KEY (order_id)
+        REFERENCES orders(id)
+        ON DELETE RESTRICT,
+
+    CONSTRAINT chk_payments_amount
+        CHECK (amount > 0)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;  

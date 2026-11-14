@@ -151,7 +151,7 @@ try {
                 </a>
 
                 <button type="button" disabled>Fittings</button>
-                <button type="button" disabled>Payments</button>
+               <a href="payments.php">Payments</a>
                 <button type="button" disabled>Studio settings</button>
             </nav>
 
