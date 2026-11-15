@@ -37,6 +37,35 @@ try {
     error_log($e->getMessage());
     $dashboardError = 'Unable to load order totals. Please refresh the page.';
 }
+$outstandingBalance = null;
+$balanceError = '';
+
+try {
+    $statement = $pdo->query(
+        "SELECT COALESCE(
+            SUM(
+                GREATEST(
+                    (orders.quantity * orders.unit_price)
+                    - COALESCE(paid.total_paid, 0),
+                    0
+                )
+            ),
+            0.00
+        ) AS outstanding_balance
+        FROM orders
+        LEFT JOIN (
+            SELECT order_id, SUM(amount) AS total_paid
+            FROM payments
+            GROUP BY order_id
+        ) AS paid ON paid.order_id = orders.id
+        WHERE orders.status <> 'Cancelled'"
+    );
+
+    $outstandingBalance = $statement->fetchColumn();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $balanceError = 'Unable to load outstanding balance.';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,20 +149,31 @@ try {
 
     <article class="summary-card">
         <h2>Outstanding balance</h2>
-        <p class="summary-value">LKR —</p>
+        <p class="summary-value">
+    LKR <?= $outstandingBalance !== null
+        ? htmlspecialchars(
+            (string) $outstandingBalance,
+            ENT_QUOTES,
+            'UTF-8'
+        )
+        : '—' ?>
+</p>
         <p class="summary-note">Remaining payments to receive</p>
     </article>
 
 </section>
 
-<?php if ($dashboardError !== ''): ?>
+<?php if ($dashboardError !== '' || $balanceError !== ''): ?>
     <p class="data-notice" role="alert">
-        <?= htmlspecialchars($dashboardError, ENT_QUOTES, 'UTF-8') ?>
+        <?= htmlspecialchars(
+            trim($dashboardError . ' ' . $balanceError),
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>
     </p>
 <?php else: ?>
     <p class="data-notice">
-        Order counts are up to date.
-        Outstanding balance will be available after payment tracking is added.
+        Order counts and outstanding balance update when this page loads.
     </p>
 <?php endif; ?>
         </main>

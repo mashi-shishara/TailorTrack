@@ -462,3 +462,11 @@ a.button-secondary {
 .status-form .button-primary {
     padding: 8px 14px;
 }
+.payment-table {
+    min-width: 900px;
+}
+
+.payment-amount,
+.payment-date {
+    white-space: nowrap;
+}

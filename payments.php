@@ -47,6 +47,31 @@ try {
     error_log($e->getMessage());
     $loadError = 'Unable to load orders. Please refresh the page.';
 }
+
+$payments = [];
+$historyError = '';
+
+try {
+    $statement = $pdo->query(
+        'SELECT
+            payments.id,
+            payments.order_id,
+            customers.name AS customer_name,
+            payments.amount,
+            payments.method,
+            payments.note,
+            payments.paid_at
+         FROM payments
+         INNER JOIN orders ON payments.order_id = orders.id
+         INNER JOIN customers ON orders.customer_id = customers.id
+         ORDER BY payments.paid_at DESC, payments.id DESC'
+    );
+
+    $payments = $statement->fetchAll();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $historyError = 'Unable to load payment history. Please refresh the page.';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -185,6 +210,57 @@ try {
                 </div>
             </form>
         </section>
+        <section id="payment-history" class="form-panel"
+         aria-labelledby="payment-history-title">
+    <h2 id="payment-history-title">Payment history</h2>
+
+    <?php if ($historyError !== ''): ?>
+        <p role="alert"><?= escape($historyError) ?></p>
+
+    <?php elseif (empty($payments)): ?>
+        <p class="description">
+            No payments recorded yet.
+        </p>
+
+    <?php else: ?>
+        <p class="description">
+            Payment records: <?= count($payments) ?>
+        </p>
+
+        <div class="table-scroll"
+             role="region"
+             aria-label="Payment history"
+             tabindex="0">
+            <table class="customer-table payment-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Payment ID</th>
+                        <th scope="col">Order</th>
+                        <th scope="col">Customer</th>
+                        <th scope="col">Amount (LKR)</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Date / Time</th>
+                        <th scope="col">Note</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($payments as $payment): ?>
+                        <tr>
+                            <td>#<?= (int) $payment['id'] ?></td>
+                            <td>#<?= (int) $payment['order_id'] ?></td>
+                            <td><?= escape($payment['customer_name']) ?></td>
+                            <td class="payment-amount"><?= escape($payment['amount']) ?></td>
+                            <td><?= escape($payment['method']) ?></td>
+                            <td class="payment-date"><?= escape($payment['paid_at']) ?></td>
+                            <td><?= escape($payment['note'] !== '' ? $payment['note'] : '—') ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
     </main>
 </div>
 
