@@ -403,7 +403,11 @@ try {
                 <tbody>
                     <?php foreach ($orders as $order): ?>
                         <tr>
-                            <td>#<?= (int) $order['id'] ?></td>
+                            <td>
+    <a href="order-details.php?id=<?= (int) $order['id'] ?>">
+        #<?= (int) $order['id'] ?>
+    </a>
+</td>
                             <td><?= escape($order['customer_name']) ?></td>
                             <td><?= escape($order['garment']) ?></td>
                             <td><?= (int) $order['quantity'] ?></td>

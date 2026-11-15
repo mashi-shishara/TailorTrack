@@ -470,3 +470,31 @@ a.button-secondary {
 .payment-date {
     white-space: nowrap;
 }
+.order-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin: 24px 0 0;
+}
+
+.order-details-grid dt {
+    color: #596B63;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.order-details-grid dd {
+    margin: 0;
+    color: #203B38;
+    overflow-wrap: anywhere;
+}
+
+.detail-text {
+    white-space: pre-wrap;
+}
+
+@media (max-width: 700px) {
+    .order-details-grid {
+        grid-template-columns: 1fr;
+    }
+}
