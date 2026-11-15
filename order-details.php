@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/config.php';
 
 function escape($value)
@@ -63,6 +64,76 @@ try {
 } catch (PDOException $e) {
     error_log($e->getMessage());
     $paymentError = 'Unable to load payment history.';
+}
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$alterationMessage = $_SESSION['alteration_success'] ?? '';
+unset($_SESSION['alteration_success']);
+
+$alterationError = '';
+$description = '';
+$alterations = [];
+$alterationListError = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_POST['csrf_token'] ?? '';
+    $submittedDescription = $_POST['description'] ?? '';
+
+    $description = is_string($submittedDescription)
+        ? trim($submittedDescription)
+        : '';
+
+    if (
+        !is_string($token) ||
+        !hash_equals($_SESSION['csrf_token'], $token)
+    ) {
+        $alterationError = 'Please refresh the page and try again.';
+    } elseif ($description === '' || mb_strlen($description) > 250) {
+        $alterationError = 'Enter an alteration with 1 to 250 characters.';
+    } else {
+        try {
+            $statement = $pdo->prepare(
+                'INSERT INTO alterations (order_id, description)
+                 VALUES (:order_id, :description)'
+            );
+
+            $statement->execute([
+                'order_id' => $id,
+                'description' => $description
+            ]);
+
+            $_SESSION['alteration_success'] =
+                'Alteration added successfully!';
+
+            session_write_close();
+            header(
+                'Location: order-details.php?id=' . $id . '#alterations',
+                true,
+                303
+            );
+            exit;
+        } catch (PDOException $e) {
+            error_log($e->getMessage());
+            $alterationError = 'Unable to save alteration. Please try again.';
+        }
+    }
+}
+
+try {
+    $statement = $pdo->prepare(
+        'SELECT id, description, done
+         FROM alterations
+         WHERE order_id = :order_id
+         ORDER BY done ASC, id DESC'
+    );
+
+    $statement->execute(['order_id' => $id]);
+    $alterations = $statement->fetchAll();
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $alterationListError = 'Unable to load alterations.';
 }
 ?>
 <!DOCTYPE html>
@@ -218,6 +289,115 @@ try {
                 </div>
             <?php endif; ?>
         </section>
+        <section id="alterations" class="form-panel"
+         aria-labelledby="alterations-title">
+    <h2 id="alterations-title">Fitting alterations</h2>
+
+    <p class="description">
+        Record changes needed for this order.
+    </p>
+
+    <?php if ($alterationMessage !== ''): ?>
+        <p class="success-alert" role="status">
+            <?= escape($alterationMessage) ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if ($alterationError !== ''): ?>
+        <p role="alert">
+            <?= escape($alterationError) ?>
+        </p>
+    <?php endif; ?>
+
+    <form method="post"
+          action="order-details.php?id=<?= (int) $id ?>#alterations">
+
+        <input type="hidden" name="csrf_token"
+               value="<?= escape($_SESSION['csrf_token']) ?>">
+
+        <div class="form-field">
+            <label for="alteration-description">
+                Required alteration *
+            </label>
+
+            <textarea
+                id="alteration-description"
+                name="description"
+                rows="3"
+                maxlength="250"
+                placeholder="Example: Shorten sleeves by 1 inch"
+                required
+            ><?= escape($description) ?></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="button-primary">
+                Add alteration
+            </button>
+        </div>
+    </form>
+
+    <h3>Alteration checklist</h3>
+
+    <?php if ($alterationListError !== ''): ?>
+        <p role="alert"><?= escape($alterationListError) ?></p>
+
+    <?php elseif (empty($alterations)): ?>
+        <p class="description">
+            No alterations recorded for this order.
+        </p>
+
+    <?php else: ?>
+        <div class="table-scroll"
+             role="region"
+             aria-label="Alterations for this order"
+             tabindex="0">
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Alteration</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach ($alterations as $alteration): ?>
+                        <tr>
+                            <td class="detail-text"><?= escape($alteration['description']) ?></td>
+                            <td>
+                                <?= (int) $alteration['done'] === 1
+                                    ? 'Completed'
+                                    : 'Pending' ?>
+                            </td>
+                            <td>
+    <form method="post" action="update-alteration.php">
+        <input type="hidden" name="csrf_token"
+               value="<?= escape($_SESSION['csrf_token']) ?>">
+
+        <input type="hidden" name="order_id"
+               value="<?= (int) $id ?>">
+
+        <input type="hidden" name="alteration_id"
+               value="<?= (int) $alteration['id'] ?>">
+
+        <input type="hidden" name="done"
+               value="<?= (int) $alteration['done'] === 1 ? '0' : '1' ?>">
+
+        <button type="submit" class="button-secondary">
+            <?= (int) $alteration['done'] === 1
+                ? 'Mark pending'
+                : 'Mark completed' ?>
+        </button>
+    </form>
+</td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endif; ?>
+</section>
     </main>
 </body>
 </html>
