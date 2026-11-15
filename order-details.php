@@ -78,6 +78,10 @@ try {
         <a href="orders.php#order-list" class="button-secondary">
             Back to orders
         </a>
+        <a href="edit-order.php?id=<?= (int) $id ?>"
+   class="button-secondary">
+    Edit order
+</a>
 
         <header class="page-header">
             <p class="eyebrow">WORKSPACE / ORDERS / DETAILS</p>
