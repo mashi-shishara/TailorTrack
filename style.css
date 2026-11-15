@@ -498,3 +498,34 @@ a.button-secondary {
         grid-template-columns: 1fr;
     }
 }
+.fitting-table {
+    min-width: 850px;
+}
+
+.fitting-nowrap {
+    white-space: nowrap;
+}
+
+.fitting-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.fitting-today {
+    background: #245E50;
+    color: #FFFFFF;
+}
+
+.fitting-upcoming {
+    background: #E7EDDC;
+    color: #245E50;
+}
+
+.fitting-past {
+    background: #FFF1DB;
+    color: #7A4700;
+}

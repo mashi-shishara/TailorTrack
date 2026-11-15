@@ -150,7 +150,7 @@ try {
                     Customers
                 </a>
 
-                <button type="button" disabled>Fittings</button>
+                <a href="fittings.php">Fittings</a>
                <a href="payments.php">Payments</a>
                 <button type="button" disabled>Studio settings</button>
             </nav>
