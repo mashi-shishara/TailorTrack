@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/config.php';
 
 $summary = null;
@@ -98,6 +99,18 @@ try {
                 <a href="payments.php">Payments</a>
                 <button type="button" disabled>Studio settings</button>
             </nav>
+            <form method="post" action="logout.php">
+    <input type="hidden" name="csrf_token"
+           value="<?= htmlspecialchars(
+               $_SESSION['csrf_token'],
+               ENT_QUOTES,
+               'UTF-8'
+           ) ?>">
+
+    <button type="submit" class="button-secondary">
+        Log out
+    </button>
+</form>
 
             <p class="sidebar-note">
                 Every measurement. Every order. One workspace.
