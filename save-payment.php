@@ -1,8 +1,17 @@
 <?php
 require_once __DIR__ . '/auth.php';
-session_start();
 
 require_once __DIR__ . '/config.php';
+
+// Only the owner can record payments.
+if (($currentUser['role'] ?? '') !== 'owner') {
+    $_SESSION['payment_error'] =
+        'Only the studio owner can record payments.';
+
+    session_write_close();
+    header('Location: payments.php', true, 303);
+    exit;
+}
 
 function input($key)
 {
