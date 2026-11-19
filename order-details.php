@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/auth.php';
-session_start();
 require_once __DIR__ . '/config.php';
 
 function escape($value)
@@ -150,10 +149,12 @@ try {
         <a href="orders.php#order-list" class="button-secondary">
             Back to orders
         </a>
-        <a href="edit-order.php?id=<?= (int) $id ?>"
-   class="button-secondary">
-    Edit order
-</a>
+        <?php if (($currentUser['role'] ?? '') === 'owner'): ?>
+    <a class="button-secondary"
+       href="edit-order.php?id=<?= (int) $id ?>">
+        Edit order
+    </a>
+<?php endif; ?>
 
         <header class="page-header">
             <p class="eyebrow">WORKSPACE / ORDERS / DETAILS</p>

@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/auth.php';
-session_start();
+
+// Only the owner can edit order details.
+if (($currentUser['role'] ?? '') !== 'owner') {
+    http_response_code(403);
+    exit('Access denied. Only the owner can edit order details.');
+}
+
 
 require_once __DIR__ . '/config.php';
 

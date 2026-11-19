@@ -1,8 +1,8 @@
+
 <?php
 require_once __DIR__ . '/auth.php';
-session_start();
 
-require_once __DIR__ . '/config.php';
+// Both Owner and Staff can update order status.
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: orders.php');
@@ -69,6 +69,7 @@ try {
     session_write_close();
     header('Location: orders.php#order-list', true, 303);
     exit;
+
 } catch (PDOException $e) {
     error_log($e->getMessage());
     http_response_code(500);
