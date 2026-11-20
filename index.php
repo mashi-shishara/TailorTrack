@@ -280,6 +280,39 @@ try {
 
             </article>
 
+            <article class="summary-card">
+
+                <h2>Due today</h2>
+
+                <p class="summary-value">
+                    <?= $summary !== null
+                        ? (int) $summary['due_today_orders']
+                        : '—' ?>
+                </p>
+
+                <p class="summary-note">
+                    Orders that must be completed today
+                </p>
+
+            </article>
+
+            <article class="summary-card">
+
+                <h2>Due tomorrow</h2>
+
+                <p class="summary-value">
+                    <?= $summary !== null
+                        ? (int) $summary['due_tomorrow_orders']
+                        : '—' ?>
+                </p>
+
+                <p class="summary-note">
+                    Orders with deadlines tomorrow
+                </p>
+
+            </article>
+
+
 
             <?php if ($isOwner): ?>
 
