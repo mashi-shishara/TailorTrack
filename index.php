@@ -16,28 +16,54 @@ try {
         new DateTimeZone('Asia/Colombo')
     ))->format('Y-m-d');
 
-    $statement = $pdo->prepare(
-        "SELECT
-            COUNT(CASE
-                WHEN status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-                THEN 1
-            END) AS active_orders,
+   
 
-            COUNT(CASE
-                WHEN status = 'Ready'
-                THEN 1
-            END) AS ready_orders,
+$statement = $pdo->prepare(
+    "SELECT
+        COUNT(CASE
+            WHEN status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+            THEN 1
+        END) AS active_orders,
 
-            COUNT(CASE
-                WHEN due_date < :today
-                AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-                THEN 1
-            END) AS overdue_orders
-         FROM orders"
-    );
+        COUNT(CASE
+            WHEN status = 'Ready'
+            THEN 1
+        END) AS ready_orders,
 
-    $statement->execute(['today' => $today]);
-    $summary = $statement->fetch();
+        COUNT(CASE
+            WHEN due_date < :overdue_today
+            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+            THEN 1
+        END) AS overdue_orders,
+
+        COUNT(CASE
+            WHEN due_date = :due_today
+            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+            THEN 1
+        END) AS due_today_orders,
+
+        COUNT(CASE
+            WHEN due_date = :due_tomorrow
+            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+            THEN 1
+        END) AS due_tomorrow_orders
+
+     FROM orders"
+);
+
+$tomorrow = (new DateTimeImmutable(
+    $today,
+    new DateTimeZone('Asia/Colombo')
+))->modify('+1 day')->format('Y-m-d');
+
+$statement->execute([
+    'overdue_today' => $today,
+    'due_today' => $today,
+    'due_tomorrow' => $tomorrow
+]);
+
+$summary = $statement->fetch();
+
 
 } catch (PDOException $e) {
     error_log($e->getMessage());
