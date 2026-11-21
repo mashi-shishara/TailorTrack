@@ -19,36 +19,38 @@ try {
    
 
 $statement = $pdo->prepare(
-    "SELECT
-        COUNT(CASE
-            WHEN status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-            THEN 1
-        END) AS active_orders,
+    "
+SELECT
+    COUNT(CASE
+        WHEN status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+        THEN 1
+    END) AS active_orders,
 
-        COUNT(CASE
-            WHEN status = 'Ready'
-            THEN 1
-        END) AS ready_orders,
+    COUNT(CASE
+        WHEN status = 'Ready'
+        THEN 1
+    END) AS ready_orders,
 
-        COUNT(CASE
-            WHEN due_date < :overdue_today
-            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-            THEN 1
-        END) AS overdue_orders,
+    COUNT(CASE
+        WHEN due_date < :overdue_today
+        AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+        THEN 1
+    END) AS overdue_orders,
 
-        COUNT(CASE
-            WHEN due_date = :due_today
-            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-            THEN 1
-        END) AS due_today_orders,
+    COUNT(CASE
+        WHEN due_date = :due_today
+        AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+        THEN 1
+    END) AS due_today_orders,
 
-        COUNT(CASE
-            WHEN due_date = :due_tomorrow
-            AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
-            THEN 1
-        END) AS due_tomorrow_orders
+    COUNT(CASE
+        WHEN due_date = :due_tomorrow
+        AND status IN ('Received', 'Cutting', 'Sewing', 'Fitting')
+        THEN 1
+    END) AS due_tomorrow_orders
 
-     FROM orders"
+FROM orders
+"
 );
 
 $tomorrow = (new DateTimeImmutable(
@@ -72,6 +74,60 @@ $summary = $statement->fetch();
 
 $outstandingBalance = null;
 $balanceError = '';
+
+
+$reminderOrders = [
+    'overdue' => [],
+    'today' => [],
+    'upcoming' => []
+];
+
+$reminderError = '';
+
+try {
+    $statement = $pdo->prepare(
+        "SELECT
+            orders.id,
+            customers.name AS customer_name,
+            orders.garment,
+            orders.due_date,
+            orders.status
+         FROM orders
+         INNER JOIN customers
+            ON orders.customer_id = customers.id
+         WHERE orders.status IN (
+            'Received', 'Cutting', 'Sewing', 'Fitting', 'Ready'
+         )
+         AND orders.due_date <= :upcoming_limit
+         ORDER BY orders.due_date ASC, orders.id DESC"
+    );
+
+    $upcomingLimit = (new DateTimeImmutable(
+        $today,
+        new DateTimeZone('Asia/Colombo')
+    ))->modify('+7 days')->format('Y-m-d');
+
+    $statement->execute([
+        'upcoming_limit' => $upcomingLimit
+    ]);
+
+    $orders = $statement->fetchAll();
+
+    foreach ($orders as $order) {
+        if ($order['due_date'] < $today) {
+            $reminderOrders['overdue'][] = $order;
+        } elseif ($order['due_date'] === $today) {
+            $reminderOrders['today'][] = $order;
+        } else {
+            $reminderOrders['upcoming'][] = $order;
+        }
+    }
+
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $reminderError = 'Unable to load deadline reminders.';
+}
+
 
 try {
     $statement = $pdo->query(
@@ -340,6 +396,110 @@ try {
 
         </section>
 
+       
+<section class="reminder-section">
+
+    <h2>Order Deadline Reminders</h2>
+
+    <?php if ($reminderError !== ''): ?>
+
+        <p class="data-notice" role="alert">
+            <?= htmlspecialchars($reminderError, ENT_QUOTES, 'UTF-8') ?>
+        </p>
+
+    <?php else: ?>
+
+        <?php
+        $reminderGroups = [
+            'overdue' => 'Overdue Orders',
+            'today' => 'Due Today',
+            'upcoming' => 'Upcoming Orders (Next 7 Days)'
+        ];
+        ?>
+
+        <?php foreach ($reminderGroups as $key => $heading): ?>
+
+            <div class="reminder-card">
+
+                <h3>
+                    <?= htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') ?>
+                    (<?= count($reminderOrders[$key]) ?>)
+                </h3>
+
+                <?php if (empty($reminderOrders[$key])): ?>
+
+                    <p class="summary-note">
+                        No orders in this category.
+                    </p>
+
+                <?php else: ?>
+
+                    <div class="reminder-list">
+
+                        <?php foreach ($reminderOrders[$key] as $order): ?>
+
+                            <article class="reminder-item">
+
+                                <div>
+                                    <strong>
+                                        Order #<?= (int) $order['id'] ?>
+                                    </strong>
+
+                                    <p>
+                                        <?= htmlspecialchars(
+                                            $order['customer_name'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+
+                                    <p class="summary-note">
+                                        <?= htmlspecialchars(
+                                            $order['garment'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p>
+                                        Due:
+                                        <?= htmlspecialchars(
+                                            $order['due_date'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+
+                                    <p class="summary-note">
+                                        <?= htmlspecialchars(
+                                            $order['status'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+
+                                    <a href="order-details.php?id=<?= (int) $order['id'] ?>">
+                                        View Order
+                                    </a>
+                                </div>
+
+                            </article>
+
+                        <?php endforeach; ?>
+
+                    </div>
+
+                <?php endif; ?>
+
+            </div>
+
+        <?php endforeach; ?>
+
+    <?php endif; ?>
+
+</section>
 
         <?php if ($dashboardError !== '' || $balanceError !== ''): ?>
 
