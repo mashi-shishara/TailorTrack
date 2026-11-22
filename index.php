@@ -96,7 +96,7 @@ try {
          INNER JOIN customers
             ON orders.customer_id = customers.id
          WHERE orders.status IN (
-            'Received', 'Cutting', 'Sewing', 'Fitting', 'Ready'
+            'Received', 'Cutting', 'Sewing', 'Fitting'
          )
          AND orders.due_date <= :upcoming_limit
          ORDER BY orders.due_date ASC, orders.id DESC"
@@ -419,7 +419,7 @@ try {
 
         <?php foreach ($reminderGroups as $key => $heading): ?>
 
-            <div class="reminder-card">
+            <div class="reminder-card reminder-card--<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
 
                 <h3>
                     <?= htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') ?>
@@ -453,13 +453,15 @@ try {
                                         ) ?>
                                     </p>
 
-                                    <p class="summary-note">
-                                        <?= htmlspecialchars(
-                                            $order['garment'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </p>
+                                    
+<span class="status-badge">
+    <?= htmlspecialchars(
+        $order['status'],
+        ENT_QUOTES,
+        'UTF-8'
+    ) ?>
+</span>
+
                                 </div>
 
                                 <div>
@@ -480,9 +482,12 @@ try {
                                         ) ?>
                                     </p>
 
-                                    <a href="order-details.php?id=<?= (int) $order['id'] ?>">
-                                        View Order
-                                    </a>
+                                    <a
+    class="reminder-view-link"
+    href="order-details.php?id=<?= (int) $order['id'] ?>"
+>
+    View Order
+</a>
                                 </div>
 
                             </article>
