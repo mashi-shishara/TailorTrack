@@ -93,3 +93,27 @@ CREATE TABLE payments (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE order_status_history (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id INT UNSIGNED NOT NULL,
+    old_status ENUM(
+        'Received', 'Cutting', 'Sewing',
+        'Fitting', 'Ready', 'Collected', 'Cancelled'
+    ) NOT NULL,
+    new_status ENUM(
+        'Received', 'Cutting', 'Sewing',
+        'Fitting', 'Ready', 'Collected', 'Cancelled'
+    ) NOT NULL,
+    changed_by INT UNSIGNED NOT NULL,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_history_order
+        FOREIGN KEY (order_id)
+        REFERENCES orders(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_history_user
+        FOREIGN KEY (changed_by)
+        REFERENCES users(id)
+        ON DELETE RESTRICT
+);

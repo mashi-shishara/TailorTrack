@@ -44,33 +44,69 @@ if (
 }
 
 try {
-    $statement = $pdo->prepare(
-        'SELECT id FROM orders WHERE id = :id'
-    );
-    $statement->execute(['id' => $id]);
+    $pdo->beginTransaction();
 
-    if (!$statement->fetch()) {
+    // Get current status.
+    $statement = $pdo->prepare(
+        'SELECT id, status FROM orders WHERE id = :id FOR UPDATE'
+    );
+
+    $statement->execute(['id' => $id]);
+    $order = $statement->fetch(PDO::FETCH_ASSOC);
+
+    if (!$order) {
+        $pdo->rollBack();
         http_response_code(404);
         exit('Order not found.');
     }
 
-    $statement = $pdo->prepare(
-        'UPDATE orders SET status = :status WHERE id = :id'
-    );
+    $oldStatus = $order['status'];
 
-    $statement->execute([
-        'status' => $status,
-        'id' => $id
-    ]);
+    // Save only when the status actually changes.
+    if ($oldStatus !== $status) {
+
+        // Update order status.
+        $statement = $pdo->prepare(
+            'UPDATE orders SET status = :status WHERE id = :id'
+        );
+
+        $statement->execute([
+            'status' => $status,
+            'id' => $id
+        ]);
+
+        // Save status history.
+        $statement = $pdo->prepare(
+            'INSERT INTO order_status_history
+             (order_id, old_status, new_status, changed_by)
+             VALUES (:order_id, :old_status, :new_status, :changed_by)'
+        );
+
+        $statement->execute([
+            'order_id' => $id,
+            'old_status' => $oldStatus,
+            'new_status' => $status,
+            'changed_by' => $currentUser['id']
+        ]);
+    }
+
+    $pdo->commit();
 
     $_SESSION['order_status_success'] =
-        'Order #' . $id . ' status updated to ' . $status . '.';
+        $oldStatus === $status
+            ? 'Order #' . $id . ' already has this status.'
+            : 'Order #' . $id . ' status updated to ' . $status . '.';
 
     session_write_close();
     header('Location: orders.php#order-list', true, 303);
     exit;
 
-} catch (PDOException $e) {
+} catch (Throwable $e) {
+
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
     error_log($e->getMessage());
     http_response_code(500);
     exit('Unable to update status. Return to Orders and try again.');
