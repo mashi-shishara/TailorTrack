@@ -48,6 +48,32 @@ if (!$order) {
     exit('Order not found.');
 }
 
+$statusHistory = [];
+$statusHistoryError = '';
+
+try {
+    $statement = $pdo->prepare(
+        'SELECT
+            order_status_history.old_status,
+            order_status_history.new_status,
+            order_status_history.changed_at,
+            users.name AS changed_by_name
+         FROM order_status_history
+         INNER JOIN users
+            ON order_status_history.changed_by = users.id
+         WHERE order_status_history.order_id = :order_id
+         ORDER BY order_status_history.changed_at DESC,
+                  order_status_history.id DESC'
+    );
+
+    $statement->execute(['order_id' => $id]);
+    $statusHistory = $statement->fetchAll();
+
+} catch (PDOException $e) {
+    error_log($e->getMessage());
+    $statusHistoryError = 'Unable to load order status history.';
+}
+
 $payments = [];
 $paymentError = '';
 
@@ -227,6 +253,66 @@ try {
 
         <section class="form-panel">
             <h2>Payment summary</h2>
+
+
+<section class="form-panel status-history-section">
+    <h2>Order Status History</h2>
+
+    <p class="description">
+        Track all status changes made to this order.
+    </p>
+
+    <?php if ($statusHistoryError !== ''): ?>
+
+        <p role="alert">
+            <?= escape($statusHistoryError) ?>
+        </p>
+
+    <?php elseif (empty($statusHistory)): ?>
+
+        <p class="description">
+            No status changes recorded yet.
+        </p>
+
+    <?php else: ?>
+
+        <div class="status-timeline">
+
+            <?php foreach ($statusHistory as $history): ?>
+
+                <div class="status-timeline-item">
+
+                    <div class="status-timeline-marker"></div>
+
+                    <div class="status-timeline-content">
+
+                        <h3>
+                            <?= escape($history['old_status']) ?>
+                            →
+                            <?= escape($history['new_status']) ?>
+                        </h3>
+
+                        <p>
+                            Updated by:
+                            <strong>
+                                <?= escape($history['changed_by_name']) ?>
+                            </strong>
+                        </p>
+
+                        <p class="description">
+                            <?= escape($history['changed_at']) ?>
+                        </p>
+
+                    </div>
+                </div>
+
+            <?php endforeach; ?>
+
+        </div>
+
+    <?php endif; ?>
+</section>
+
 
             <dl class="order-details-grid">
                 <div>
